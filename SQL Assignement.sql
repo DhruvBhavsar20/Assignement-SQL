@@ -894,3 +894,84 @@ SELECT
     ) AS moving_avg
 FROM Orders;
 
+
+-- Case Studies
+
+SELECT
+    name,
+    location,
+    cuisines,
+    rate
+FROM zomato_restaurants
+WHERE location LIKE '%Koramangala%'
+    AND cuisines LIKE '%North Indian%'
+    AND rate IS NOT NULL
+ORDER BY CAST(rate AS DECIMAL(3,1)) DESC
+LIMIT 5;
+
+SELECT
+    cuisines,
+    AVG(`approx_cost(for two people)`) AS avg_cost
+FROM zomato_restaurants
+GROUP BY cuisines
+ORDER BY avg_cost DESC
+LIMIT 3;
+
+
+SELECT
+    name,
+    location,
+    cuisines,
+    rate,
+    `approx_cost(for two people)` AS cost_for_two
+FROM zomato_restaurants
+WHERE online_order = 'Yes'
+    AND CAST(rate AS DECIMAL(3,1)) < 3.0;
+
+-- Suggested Marketing Strategy
+
+After reviewing the results, analyze:
+
+SELECT
+    location,
+    COUNT(*) AS low_rated_restaurants
+FROM zomato_restaurants
+WHERE online_order = 'Yes'
+    AND CAST(rate AS DECIMAL(3,1)) < 3.0
+GROUP BY location
+ORDER BY low_rated_restaurants DESC;
+
+SELECT
+    cuisines,
+    COUNT(*) AS low_rated_restaurants
+FROM zomato_restaurants
+WHERE online_order = 'Yes'
+    AND CAST(rate AS DECIMAL(3,1)) < 3.0
+GROUP BY cuisines
+ORDER BY low_rated_restaurants DESC;
+
+SELECT
+    CASE
+        WHEN `approx_cost(for two people)` < 400 THEN 'Budget'
+        WHEN `approx_cost(for two people)` BETWEEN 400 AND 800 THEN 'Mid-Range'
+        ELSE 'Premium'
+    END AS market_segment,
+    COUNT(*) AS restaurant_count
+FROM zomato_restaurants
+GROUP BY market_segment;
+
+SELECT
+    name AS restaurant_chain,
+    COUNT(*) AS total_outlets
+FROM zomato_restaurants
+GROUP BY name
+HAVING COUNT(*) > 1
+ORDER BY total_outlets DESC
+LIMIT 10;
+
+SELECT
+    name,
+    COUNT(*) AS outlet_count
+FROM zomato_restaurants
+GROUP BY name
+ORDER BY outlet_count DESC;
