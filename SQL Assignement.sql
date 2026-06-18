@@ -738,3 +738,159 @@ WITH PopularUsers AS
 )
 SELECT *
 FROM PopularUsers;
+
+-- Session 13
+
+CREATE DATABASE Session13_DB;
+USE Session13_DB;
+
+-- Task 1: Create Playlists Table
+
+CREATE TABLE Playlists (
+    id INT PRIMARY KEY,
+    user_id INT,
+    playlist_name VARCHAR(100),
+    total_likes INT
+);
+
+INSERT INTO Playlists VALUES
+(1, 101, 'Workout Beats', 500),
+(2, 101, 'Chill Vibes', 750),
+(3, 101, 'Road Trip Mix', 600),
+(4, 102, 'Bollywood Hits', 900),
+(5, 102, 'Party Songs', 700),
+(6, 103, 'LoFi Study', 850),
+(7, 103, 'Morning Motivation', 850),
+(8, 103, 'Relaxing Music', 650);
+
+SELECT
+    id,
+    user_id,
+    playlist_name,
+    total_likes,
+    ROW_NUMBER() OVER (ORDER BY total_likes DESC) AS row_num
+FROM Playlists;
+
+SELECT
+    playlist_name,
+    user_id,
+    total_likes,
+    RANK() OVER (ORDER BY total_likes DESC) AS playlist_rank
+FROM Playlists;
+
+SELECT
+    playlist_name,
+    user_id,
+    total_likes,
+    DENSE_RANK() OVER (
+        PARTITION BY user_id
+        ORDER BY total_likes DESC
+    ) AS dense_rank
+FROM Playlists;
+
+SELECT
+    id,
+    user_id,
+    playlist_name,
+    total_likes
+FROM (
+    SELECT
+        id,
+        user_id,
+        playlist_name,
+        total_likes,
+        ROW_NUMBER() OVER (
+            PARTITION BY user_id
+            ORDER BY total_likes DESC
+        ) AS rn
+    FROM Playlists
+) AS RankedPlaylists
+WHERE rn <= 2;
+
+
+
+-- Session 14 
+
+
+CREATE DATABASE Session14_DB;
+USE Session14_DB;
+
+CREATE TABLE Orders (
+    order_id INT PRIMARY KEY,
+    user_id INT,
+    order_date DATE,
+    total_amount DECIMAL(10,2)
+);
+
+INSERT INTO Orders VALUES
+(101, 1, '2025-06-01', 250.00),
+(102, 1, '2025-06-05', 400.00),
+(103, 1, '2025-06-10', 350.00),
+(104, 2, '2025-06-02', 150.00),
+(105, 2, '2025-06-08', 300.00),
+(106, 3, '2025-06-04', 500.00),
+(107, 3, '2025-06-12', 700.00);
+
+SELECT
+    user_id,
+    order_id,
+    order_date,
+    total_amount,
+    LAG(total_amount) OVER (
+        PARTITION BY user_id
+        ORDER BY order_date
+    ) AS previous_order_amount
+FROM Orders;
+
+SELECT
+    user_id,
+    order_id,
+    order_date,
+    total_amount,
+    LEAD(total_amount) OVER (
+        PARTITION BY user_id
+        ORDER BY order_date
+    ) AS next_order_amount
+FROM Orders;
+
+SELECT
+    user_id,
+    order_id,
+    order_date,
+    total_amount,
+    SUM(total_amount) OVER (
+        PARTITION BY user_id
+        ORDER BY order_date
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS running_total
+FROM Orders;
+
+SELECT
+    user_id,
+    order_id,
+    order_date,
+    total_amount,
+    AVG(total_amount) OVER (
+        PARTITION BY user_id
+        ORDER BY order_date
+        ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+    ) AS moving_avg
+FROM Orders;
+
+SELECT
+    user_id,
+    order_id,
+    order_date,
+    total_amount,
+    SUM(total_amount) OVER (
+        PARTITION BY user_id
+        ORDER BY order_date
+        ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+    ) /
+    COUNT(*) OVER (
+        PARTITION BY user_id
+        ORDER BY order_date
+        ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+    ) AS moving_avg
+FROM Orders;
+
